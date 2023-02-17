@@ -1,14 +1,19 @@
-import Image from "next/image";
-import { SearchInput } from "./Input";
-import Logo from "../assets/Logo.svg";
 import { styled } from "@stitches/react";
-import { ChangeEvent, useCallback, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/router";
+import { ChangeEvent, useState } from "react";
+import Logo from "../assets/Logo.svg";
+import { SearchInput } from "./Input";
 
 export const Main = () => {
   const [keyword, setKeyword] = useState("");
+  const router = useRouter();
 
-  const handleSearch = () => {
-    console.log(keyword);
+  const handleSearch = async () => {
+    router.push({
+      pathname: "/result",
+      query: { keyword: keyword },
+    });
   };
   const handleChangeText = (e: ChangeEvent<HTMLInputElement>) => {
     setKeyword(e.target.value);

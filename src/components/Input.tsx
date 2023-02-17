@@ -1,6 +1,6 @@
 import { styled } from "@stitches/react";
 import Image from "next/image";
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import Save from "../assets/Save.svg";
 import Unsave from "../assets/Unsave.svg";
 

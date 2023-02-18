@@ -14,14 +14,15 @@ import { styled } from "@stitches/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Image, { ImageLoaderProps } from "next/image";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SearchResultType } from "../api/getSearchResult";
 
 export default function SearchResult() {
   const router = useRouter();
   const [keyword, setKeyword] = useState<string>("");
   const getSearchResults = useGetSearchResults();
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const searchResultsQuery = useQuery({
     queryKey: [getSearchResults],
     queryFn: () =>
@@ -45,9 +46,28 @@ export default function SearchResult() {
     setKeyword(router.query.keyword);
   }, [router.query.keyword]);
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+    function handleScroll() {
+      if (window.scrollY !== 0) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    }
+  }, [isScrolled]);
+
   return (
-    <Container>
-      <Header>
+    <Container ref={containerRef}>
+      <Header
+        style={{ borderBottom: isScrolled ? "1px solid #f2f3f7" : "none" }}
+      >
         <BackButton onClick={() => router.back()}>
           <Image alt="back" src={Back} />
         </BackButton>
@@ -58,19 +78,21 @@ export default function SearchResult() {
           handleKeydownEnter={handleSearch}
         />
       </Header>
-      {searchResultsQuery.isFetching ? (
-        <FallbackSkeleton />
-      ) : (
-        searchResultsQuery.data &&
-        searchResultsQuery.data.documents.map((searchResult) => {
-          return (
-            <SearchResultItem
-              key={searchResult.id}
-              searchResult={searchResult}
-            />
-          );
-        })
-      )}
+      <SearchResultsList>
+        {searchResultsQuery.isFetching ? (
+          <FallbackSkeleton />
+        ) : (
+          searchResultsQuery.data &&
+          searchResultsQuery.data.documents.map((searchResult) => {
+            return (
+              <SearchResultItem
+                key={searchResult.id}
+                searchResult={searchResult}
+              />
+            );
+          })
+        )}
+      </SearchResultsList>
     </Container>
   );
 }
@@ -170,6 +192,10 @@ const imageLoader = (props: ImageLoaderProps) => {
   return `${props.src}`;
 };
 
+const SearchResultsList = styled("div", {
+  padding: "0px 32px 0px 42px",
+});
+
 const BookmarkButton = styled("button", {
   width: 40,
   height: 40,
@@ -248,8 +274,11 @@ const Header = styled("div", {
   alignItems: "center",
   gap: 12,
   marginBottom: 8,
+  position: "sticky",
+  top: 0,
+  backgroundColor: "#FFFFFF",
+  height: 80,
+  padding: "0px 32px 0px 42px",
 });
 
-const Container = styled("div", {
-  padding: "16px 40px 0px 32px",
-});
+const Container = styled("div", {});

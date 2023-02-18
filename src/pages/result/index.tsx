@@ -1,44 +1,38 @@
 import Back from "@/assets/Back.svg";
 import { SearchInput } from "@/components/Input";
-import { useGetSearchResults } from "@/providers/ApiProvider";
 import { styled } from "@stitches/react";
-import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 export default function SearchResult() {
-  const getSearchResults = useGetSearchResults();
   const router = useRouter();
-  const [keyword, setKeyword] = useState<string>(
-    router.query.keyword as string
-  );
-  const searchResults = useQuery({
-    queryKey: [getSearchResults],
-    queryFn: () =>
-      getSearchResults({
-        query: keyword as string,
-        size: 20,
-        from: null,
-      }),
-  }).data;
+  const [keyword, setKeyword] = useState<string>("");
+
+  const handleSearch = useCallback(async () => {
+    router.push({
+      pathname: "/result",
+      query: { keyword: keyword },
+    });
+  }, [keyword, router]);
 
   return (
     <Container>
       <Header>
-        <BackButton>
+        <BackButton onClick={() => router.back()}>
           <Image alt="back" src={Back} />
         </BackButton>
         <SearchInput
           keyword={keyword}
           clearButton={true}
           updateKeyword={setKeyword}
+          handleKeydownEnter={handleSearch}
         />
       </Header>
-      {searchResults &&
+      {/* {searchResults &&
         searchResults.documents.map((searchResult) => {
           return <div key={searchResult.id}>{searchResult.title}</div>;
-        })}
+        })} */}
     </Container>
   );
 }

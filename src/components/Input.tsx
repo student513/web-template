@@ -1,11 +1,9 @@
 import { styled } from "@stitches/react";
 import Image from "next/image";
-import { useRouter } from "next/router";
 import {
   ChangeEvent,
   Dispatch,
   SetStateAction,
-  useCallback,
   useEffect,
   useRef,
   useState,
@@ -18,21 +16,15 @@ export const SearchInput = ({
   keyword,
   clearButton,
   updateKeyword,
+  handleKeydownEnter,
 }: {
   keyword: string;
   clearButton?: boolean;
   updateKeyword: Dispatch<SetStateAction<string>>;
+  handleKeydownEnter: () => void;
 }) => {
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-
-  const handleSearch = useCallback(async () => {
-    router.push({
-      pathname: "/result",
-      query: { keyword: keyword },
-    });
-  }, [keyword, router]);
 
   const handleChangeText = (e: ChangeEvent<HTMLInputElement>) => {
     updateKeyword(e.target.value);
@@ -57,7 +49,7 @@ export const SearchInput = ({
       if (event.key !== "Enter") {
         return;
       }
-      handleSearch();
+      handleKeydownEnter();
     }
     function handleFocusout() {
       setFocused(false);
@@ -65,7 +57,7 @@ export const SearchInput = ({
     function handleFocusin() {
       setFocused(true);
     }
-  }, [handleSearch]);
+  }, [handleKeydownEnter]);
 
   return (
     <InputContainer>

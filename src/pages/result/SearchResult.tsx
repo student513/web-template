@@ -1,12 +1,17 @@
 import Back from "@/assets/Back.svg";
 import DefaultFavicon from "@/assets/default_favi.svg";
 import DefaultThumbnail from "@/assets/default_thumb.svg";
+import Save from "@/assets/Save.svg";
 import Unsave from "@/assets/Unsave.svg";
 import { FallbackSkeleton } from "@/components/FallbackSkeleton";
 import { SearchInput } from "@/components/Input";
-import { useGetSearchResults } from "@/providers/ApiProvider";
+import {
+  useDeleteRemoveBookmark,
+  useGetSearchResults,
+  usePostAddBookmark,
+} from "@/providers/ApiProvider";
 import { styled } from "@stitches/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Image, { ImageLoaderProps } from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
@@ -16,6 +21,7 @@ export default function SearchResult() {
   const router = useRouter();
   const [keyword, setKeyword] = useState<string>("");
   const getSearchResults = useGetSearchResults();
+
   const searchResultsQuery = useQuery({
     queryKey: [getSearchResults],
     queryFn: () =>
@@ -74,11 +80,32 @@ const SearchResultItem = ({
 }: {
   searchResult: SearchResultType["documents"][number];
 }) => {
-  const [isError, setIsError] = useState(false);
+  const [isErrorThumb, setIsErrorThumb] = useState(false);
+  const [isBookmarkSaved, setIsBookmarkSaved] = useState(searchResult.isSaved);
   const router = useRouter();
+  const postAddBookmark = usePostAddBookmark();
+  const deleteRemoveBookmark = useDeleteRemoveBookmark();
 
-  const bookmarkToggle = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const addBookmarkMutation = useMutation({
+    mutationFn: () => postAddBookmark(searchResult.id),
+    onError: (error, variables, context) => {},
+    onSuccess: (data, variables, context) => {
+      setIsBookmarkSaved(true);
+    },
+  });
+
+  const removeBookmarkMutation = useMutation({
+    mutationFn: () => deleteRemoveBookmark(searchResult.id),
+    onError: (error, variables, context) => {},
+    onSuccess: (data, variables, context) => {
+      setIsBookmarkSaved(false);
+    },
+  });
+
+  const addBookmark = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
+    if (!isBookmarkSaved) await addBookmarkMutation.mutateAsync();
+    else await removeBookmarkMutation.mutateAsync();
   };
 
   return (
@@ -88,7 +115,7 @@ const SearchResultItem = ({
       }}
     >
       <SearchResultItemThumbnail>
-        {isError ? (
+        {isErrorThumb ? (
           <Image src={DefaultThumbnail} alt={"thumbnail"} />
         ) : (
           <Image
@@ -99,7 +126,7 @@ const SearchResultItem = ({
             }
             width={72}
             height={72}
-            onError={() => setIsError(true)}
+            onError={() => setIsErrorThumb(true)}
           />
         )}
       </SearchResultItemThumbnail>
@@ -128,8 +155,8 @@ const SearchResultItem = ({
           </LinkTypography>
         </SearchResultItemContent>
       </SearchResultItemSubContainer>
-      <BookmarkButton onClick={bookmarkToggle}>
-        <Image src={Unsave} alt="unsaved bookmark" />
+      <BookmarkButton onClick={addBookmark}>
+        <Image src={isBookmarkSaved ? Save : Unsave} alt="unsaved bookmark" />
       </BookmarkButton>
     </SearchResultItemContainer>
   );

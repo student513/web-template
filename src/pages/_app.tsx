@@ -1,6 +1,5 @@
 import { ApiProvider } from "@/providers/ApiProvider";
 import { AxiosInstanceProvider } from "@/providers/AxiosInstanceProvider";
-import { TanstackQueryProvider } from "@/providers/TanstackQueryProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
@@ -23,9 +22,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <QueryClientProvider client={queryClient}>
         <AxiosInstanceProvider>
           <ApiProvider>
-            <TanstackQueryProvider>
-              <Component {...pageProps} />
-            </TanstackQueryProvider>
+            <Component {...pageProps} />
           </ApiProvider>
         </AxiosInstanceProvider>
       </QueryClientProvider>

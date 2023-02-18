@@ -1,23 +1,11 @@
 import { styled } from "@stitches/react";
 import Image from "next/image";
-import { useRouter } from "next/router";
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import Logo from "../assets/Logo.svg";
 import { SearchInput } from "./Input";
 
 export const Main = () => {
   const [keyword, setKeyword] = useState("");
-  const router = useRouter();
-
-  const handleSearch = async () => {
-    router.push({
-      pathname: "/result",
-      query: { keyword: keyword },
-    });
-  };
-  const handleChangeText = (e: ChangeEvent<HTMLInputElement>) => {
-    setKeyword(e.target.value);
-  };
 
   return (
     <MainContainer>
@@ -27,11 +15,7 @@ export const Main = () => {
         <Image alt="logo" src={Logo} />
       </div>
       <div style={{ marginTop: 80 }}>
-        <SearchInput
-          keyword={keyword}
-          handleSearch={handleSearch}
-          handleChangeText={handleChangeText}
-        />
+        <SearchInput keyword={keyword} updateKeyword={setKeyword} />
       </div>
     </MainContainer>
   );

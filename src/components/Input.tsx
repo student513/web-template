@@ -1,20 +1,42 @@
 import { styled } from "@stitches/react";
 import Image from "next/image";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import Clear from "../assets/Clear.svg";
 import Save from "../assets/Save.svg";
 import Unsave from "../assets/Unsave.svg";
 
 export const SearchInput = ({
   keyword,
-  handleSearch,
-  handleChangeText,
+  clearButton,
+  updateKeyword,
 }: {
   keyword: string;
-  handleSearch: () => void;
-  handleChangeText: (e: ChangeEvent<HTMLInputElement>) => void;
+  clearButton?: boolean;
+  updateKeyword: Dispatch<SetStateAction<string>>;
 }) => {
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  const handleSearch = useCallback(async () => {
+    router.push({
+      pathname: "/result",
+      query: { keyword: keyword },
+    });
+  }, [keyword, router]);
+
+  const handleChangeText = (e: ChangeEvent<HTMLInputElement>) => {
+    updateKeyword(e.target.value);
+  };
 
   useEffect(() => {
     const input = inputRef.current;
@@ -22,13 +44,13 @@ export const SearchInput = ({
       return;
     }
     input.addEventListener("keydown", handleKeydown);
-    input.addEventListener("focusin", handleFocusout);
-    input.addEventListener("focusout", handleFocusin);
+    input.addEventListener("focusin", handleFocusin);
+    input.addEventListener("focusout", handleFocusout);
 
     return () => {
       input.removeEventListener("keydown", handleKeydown);
-      input.removeEventListener("focusin", handleFocusout);
-      input.removeEventListener("focusout", handleFocusin);
+      input.removeEventListener("focusin", handleFocusin);
+      input.removeEventListener("focusout", handleFocusout);
     };
 
     function handleKeydown(event: KeyboardEvent) {
@@ -59,6 +81,11 @@ export const SearchInput = ({
         value={keyword}
         onChange={handleChangeText}
       />
+      {clearButton && (
+        <ClearButton onClick={() => updateKeyword("")}>
+          <Image alt="clear" src={Clear} />
+        </ClearButton>
+      )}
     </InputContainer>
   );
 };
@@ -90,4 +117,12 @@ const Input = styled("input", {
     fontWeight: 400,
     color: "#C2C6CE",
   },
+});
+
+const ClearButton = styled("button", {
+  display: "flex",
+  alignItems: "center",
+  border: "none",
+  backgroundColor: "transparent",
+  cursor: "pointer",
 });

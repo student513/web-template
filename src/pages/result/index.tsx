@@ -1,4 +1,5 @@
 import Back from "@/assets/Back.svg";
+import { FallbackSkeleton } from "@/components/FallbackSkeleton";
 import { SearchInput } from "@/components/Input";
 import { useSearchResultsQuery } from "@/providers/TanstackQueryProvider";
 import { styled } from "@stitches/react";
@@ -50,10 +51,15 @@ export default function SearchResult() {
           handleKeydownEnter={handleSearch}
         />
       </Header>
-      {searchResults &&
+      {/* router가 아니라 query가 준비되면  */}
+      {router.isReady ? (
+        searchResults &&
         searchResults.documents.map((searchResult) => {
           return <div key={searchResult.id}>{searchResult.title}</div>;
-        })}
+        })
+      ) : (
+        <FallbackSkeleton />
+      )}
     </Container>
   );
 }
@@ -75,6 +81,7 @@ const Header = styled("div", {
   display: "flex",
   alignItems: "center",
   gap: 12,
+  marginBottom: 8,
 });
 
 const Container = styled("div", {

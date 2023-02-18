@@ -24,7 +24,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <AxiosInstanceProvider>
           <ApiProvider>
             <TanstackQueryProvider>
-              {router.isReady && <Component {...pageProps} />}
+              <Component {...pageProps} />
             </TanstackQueryProvider>
           </ApiProvider>
         </AxiosInstanceProvider>

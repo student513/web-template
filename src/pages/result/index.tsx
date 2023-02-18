@@ -1,18 +1,27 @@
 import Back from "@/assets/Back.svg";
 import { FallbackSkeleton } from "@/components/FallbackSkeleton";
 import { SearchInput } from "@/components/Input";
-import { useSearchResultsQuery } from "@/providers/TanstackQueryProvider";
+import { useGetSearchResults } from "@/providers/ApiProvider";
 import { styled } from "@stitches/react";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
-import { SearchResultType } from "../api/getSearchResult";
 
 export default function SearchResult() {
   const router = useRouter();
-  const searchResultsQuery = useSearchResultsQuery();
   const [keyword, setKeyword] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<SearchResultType>();
+  const getSearchResults = useGetSearchResults();
+  const searchResultsQuery = useQuery({
+    queryKey: [getSearchResults],
+    queryFn: () =>
+      getSearchResults({
+        query: router.query.keyword as string,
+        size: 20,
+        from: null,
+      }),
+    suspense: true,
+  });
 
   const handleSearch = useCallback(async () => {
     router.push({
@@ -25,18 +34,6 @@ export default function SearchResult() {
     if (typeof router.query.keyword !== "string") return;
     setKeyword(router.query.keyword);
   }, [router.query.keyword]);
-
-  useEffect(() => {
-    (async () => {
-      if (typeof router.query.keyword !== "string") return;
-      const searchResults = await searchResultsQuery({
-        query: router.query.keyword,
-        size: 20,
-        from: null,
-      });
-      setSearchResults(searchResults);
-    })();
-  }, [router.query.keyword, searchResultsQuery]);
 
   return (
     <Container>
@@ -51,14 +48,13 @@ export default function SearchResult() {
           handleKeydownEnter={handleSearch}
         />
       </Header>
-      {/* router가 아니라 query가 준비되면  */}
-      {router.isReady ? (
-        searchResults &&
-        searchResults.documents.map((searchResult) => {
+      {searchResultsQuery.isFetching ? (
+        <FallbackSkeleton />
+      ) : (
+        searchResultsQuery.data &&
+        searchResultsQuery.data.documents.map((searchResult) => {
           return <div key={searchResult.id}>{searchResult.title}</div>;
         })
-      ) : (
-        <FallbackSkeleton />
       )}
     </Container>
   );

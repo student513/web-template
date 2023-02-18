@@ -3,7 +3,6 @@ import { useState } from "react";
 
 export const FallbackSkeleton = () => {
   const [array] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8]);
-  console.log(array);
   return (
     <>
       {array.map((x, index) => {

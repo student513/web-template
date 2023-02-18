@@ -1,6 +1,7 @@
 import Back from "@/assets/Back.svg";
 import DefaultFavicon from "@/assets/default_favi.svg";
 import DefaultThumbnail from "@/assets/default_thumb.svg";
+import Unsave from "@/assets/Unsave.svg";
 import { FallbackSkeleton } from "@/components/FallbackSkeleton";
 import { SearchInput } from "@/components/Input";
 import { useGetSearchResults } from "@/providers/ApiProvider";
@@ -74,8 +75,18 @@ const SearchResultItem = ({
   searchResult: SearchResultType["documents"][number];
 }) => {
   const [isError, setIsError] = useState(false);
+  const router = useRouter();
+
+  const bookmarkToggle = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+
   return (
-    <SearchResultItemContainer>
+    <SearchResultItemContainer
+      onClick={() => {
+        router.replace(searchResult.url);
+      }}
+    >
       <SearchResultItemThumbnail>
         {isError ? (
           <Image src={DefaultThumbnail} alt={"thumbnail"} />
@@ -93,7 +104,11 @@ const SearchResultItem = ({
         )}
       </SearchResultItemThumbnail>
       <SearchResultItemSubContainer>
-        <SearchResultItemTitle>{searchResult.title}</SearchResultItemTitle>
+        <SearchResultItemTitle>
+          <SearchResultItemTitleTypography>
+            {searchResult.title}
+          </SearchResultItemTitleTypography>
+        </SearchResultItemTitle>
         <SearchResultItemContent>
           {searchResult.faviconUrl ? (
             <Image
@@ -108,21 +123,50 @@ const SearchResultItem = ({
           ) : (
             <Image src={DefaultFavicon} alt={"favicon"} />
           )}
+          <LinkTypography>
+            {parseUrltoHostname(new URL(searchResult.url))}
+          </LinkTypography>
         </SearchResultItemContent>
       </SearchResultItemSubContainer>
+      <BookmarkButton onClick={bookmarkToggle}>
+        <Image src={Unsave} alt="unsaved bookmark" />
+      </BookmarkButton>
     </SearchResultItemContainer>
   );
+};
+
+const parseUrltoHostname = (url: URL) => {
+  return url.hostname.replace("www.", "");
 };
 
 const imageLoader = (props: ImageLoaderProps) => {
   return `${props.src}`;
 };
 
-const SearchResultItemContainer = styled("div", {
+const BookmarkButton = styled("button", {
+  width: 40,
+  height: 40,
+  borderRadius: 12,
+  border: "none",
+  backgroundColor: "transparent",
+  marginLeft: "auto",
+  "&:hover": {
+    backgroundColor: "#F2F3F7",
+  },
+});
+
+const SearchResultItemContainer = styled("button", {
   width: "100%",
   height: 104,
   display: "flex",
   alignItems: "center",
+  backgroundColor: "transparent",
+  border: "none",
+  borderRadius: 16,
+  padding: "16px 12px 16px 20px",
+  "&:hover": {
+    backgroundColor: "#F8F9FB",
+  },
 });
 const SearchResultItemSubContainer = styled("div", {
   marginLeft: 16,
@@ -137,19 +181,28 @@ const SearchResultItemThumbnail = styled("div", {
   borderRadius: 12,
 });
 const SearchResultItemTitle = styled("div", {
-  width: 457,
+  width: "100%",
   height: 20,
   borderRadius: 4,
-  marginTop: 19,
+  textAlign: "start",
+});
+const SearchResultItemTitleTypography = styled("span", {
+  fontWeight: 700,
+  fontSize: 15,
 });
 const SearchResultItemContent = styled("div", {
-  width: 160,
   height: 14,
   borderRadius: 4,
   marginTop: 31,
-  marginBottom: 20,
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
 });
-
+const LinkTypography = styled("span", {
+  fontWeight: 400,
+  fontSize: 13,
+  color: "#959CA6",
+});
 const BackButton = styled("button", {
   display: "flex",
   alignItems: "center",

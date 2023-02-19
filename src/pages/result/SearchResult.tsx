@@ -213,9 +213,7 @@ const SearchResultItem = ({
           ) : (
             <Image src={DefaultFavicon} alt={"favicon"} />
           )}
-          <LinkTypography>
-            {parseUrltoHostname(new URL(searchResult.url))}
-          </LinkTypography>
+          <LinkTypography>{searchResult.netloc}</LinkTypography>
         </SearchResultItemContent>
       </SearchResultItemSubContainer>
       <BookmarkButton onClick={addBookmark}>
@@ -223,10 +221,6 @@ const SearchResultItem = ({
       </BookmarkButton>
     </SearchResultItemContainer>
   );
-};
-
-const parseUrltoHostname = (url: URL) => {
-  return url.hostname.replace("www.", "");
 };
 
 const imageLoader = (props: ImageLoaderProps) => {

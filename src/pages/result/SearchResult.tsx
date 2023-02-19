@@ -12,7 +12,7 @@ import {
   usePostAddBookmark,
 } from "@/providers/ApiProvider";
 import { styled } from "@stitches/react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import Image, { ImageLoaderProps } from "next/image";
 import { useRouter } from "next/router";
 import {
@@ -34,15 +34,25 @@ export default function SearchResult() {
   const getSearchResults = useGetSearchResults();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isError, setIsError] = useState<ErrorType>("none");
-  const searchResultsQuery = useQuery({
+  const fromRef = useRef(0);
+
+  const searchResultsQuery = useInfiniteQuery({
     queryKey: [getSearchResults],
     queryFn: () =>
       getSearchResults({
         query: router.query.keyword as string,
         size: 20,
-        from: null,
+        from: fromRef.current,
       }),
+    getNextPageParam: (lastPage, allPages) => {
+      return {
+        query: router.query.keyword as string,
+        size: 20,
+        from: fromRef.current,
+      };
+    },
     onError: () => setIsError("401"),
+    onSuccess: () => console.log("success"),
     suspense: true,
   });
 
@@ -50,6 +60,21 @@ export default function SearchResult() {
     if (typeof router.query.keyword !== "string") return;
     setKeyword(router.query.keyword);
   }, [router.query.keyword]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+
+    async function handleScroll() {
+      const isLast = searchResultsQuery.data?.pages.some((page) => page.isLast);
+      if (isLast) return;
+      const { scrollTop, offsetHeight } = document.documentElement;
+      if (window.innerHeight + scrollTop >= offsetHeight) {
+        fromRef.current += 20;
+        searchResultsQuery.fetchNextPage();
+      }
+    }
+  }, [searchResultsQuery]);
 
   return (
     <Container ref={containerRef}>
@@ -64,15 +89,18 @@ export default function SearchResult() {
           <FallbackSkeleton />
         ) : (
           searchResultsQuery.data &&
-          searchResultsQuery.data.documents.map((searchResult) => {
-            return (
-              <SearchResultItem
-                key={searchResult.id}
-                searchResult={searchResult}
-                setIsError={setIsError}
-              />
-            );
-          })
+          searchResultsQuery.data.pages
+            .map((page) => page.documents)
+            .flat()
+            .map((searchResult, index) => {
+              return (
+                <SearchResultItem
+                  key={searchResult.id}
+                  searchResult={searchResult}
+                  setIsError={setIsError}
+                />
+              );
+            })
         )}
       </SearchResultsList>
     </Container>

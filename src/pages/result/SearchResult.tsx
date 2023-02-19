@@ -17,6 +17,7 @@ import Image, { ImageLoaderProps } from "next/image";
 import { useRouter } from "next/router";
 import {
   Dispatch,
+  RefObject,
   SetStateAction,
   useCallback,
   useEffect,
@@ -32,7 +33,6 @@ export default function SearchResult() {
   const [keyword, setKeyword] = useState<string>("");
   const getSearchResults = useGetSearchResults();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isError, setIsError] = useState<ErrorType>("none");
   const searchResultsQuery = useQuery({
     queryKey: [getSearchResults],
@@ -46,51 +46,19 @@ export default function SearchResult() {
     suspense: true,
   });
 
-  const handleSearch = useCallback(async () => {
-    router.push({
-      pathname: "/result",
-      query: { keyword: keyword },
-    });
-  }, [keyword, router]);
-
   useEffect(() => {
     if (typeof router.query.keyword !== "string") return;
     setKeyword(router.query.keyword);
   }, [router.query.keyword]);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-    function handleScroll() {
-      if (window.scrollY !== 0) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    }
-  }, [isScrolled]);
-
   return (
     <Container ref={containerRef}>
       {isError !== "none" && <Modal updateError={setIsError} />}
-      <Header
-        style={{ borderBottom: isScrolled ? "1px solid #f2f3f7" : "none" }}
-      >
-        <BackButton onClick={() => router.back()}>
-          <Image alt="back" src={Back} />
-        </BackButton>
-        <SearchInput
-          keyword={keyword}
-          clearButton={true}
-          updateKeyword={setKeyword}
-          handleKeydownEnter={handleSearch}
-        />
-      </Header>
+      <SearchResultHeader
+        keyword={keyword}
+        setKeyword={setKeyword}
+        containerRef={containerRef}
+      />
       <SearchResultsList>
         {searchResultsQuery.isFetching ? (
           <FallbackSkeleton />
@@ -110,6 +78,57 @@ export default function SearchResult() {
     </Container>
   );
 }
+
+const SearchResultHeader = ({
+  keyword,
+  setKeyword,
+  containerRef,
+}: {
+  keyword: string;
+  setKeyword: Dispatch<SetStateAction<string>>;
+  containerRef: RefObject<HTMLDivElement>;
+}) => {
+  const router = useRouter();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const handleSearch = useCallback(async () => {
+    router.push({
+      pathname: "/result",
+      query: { keyword: keyword },
+    });
+  }, [keyword, router]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+    function handleScroll() {
+      if (window.scrollY !== 0) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    }
+  }, [containerRef, isScrolled]);
+
+  return (
+    <Header style={{ borderBottom: isScrolled ? "1px solid #f2f3f7" : "none" }}>
+      <BackButton onClick={() => router.back()}>
+        <Image alt="back" src={Back} />
+      </BackButton>
+      <SearchInput
+        keyword={keyword}
+        clearButton={!!keyword}
+        updateKeyword={setKeyword}
+        handleKeydownEnter={handleSearch}
+      />
+    </Header>
+  );
+};
 
 const SearchResultItem = ({
   searchResult,

@@ -5,6 +5,7 @@ import Save from "@/assets/Save.svg";
 import Unsave from "@/assets/Unsave.svg";
 import { FallbackSkeleton } from "@/components/FallbackSkeleton";
 import { SearchInput } from "@/components/Input";
+import { Modal } from "@/components/Modal";
 import {
   useDeleteRemoveBookmark,
   useGetSearchResults,
@@ -14,8 +15,17 @@ import { styled } from "@stitches/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Image, { ImageLoaderProps } from "next/image";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { SearchResultType } from "../api/getSearchResult";
+
+export type ErrorType = "401" | "500" | "none";
 
 export default function SearchResult() {
   const router = useRouter();
@@ -23,6 +33,7 @@ export default function SearchResult() {
   const getSearchResults = useGetSearchResults();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isError, setIsError] = useState<ErrorType>("none");
   const searchResultsQuery = useQuery({
     queryKey: [getSearchResults],
     queryFn: () =>
@@ -31,6 +42,7 @@ export default function SearchResult() {
         size: 20,
         from: null,
       }),
+    onError: () => setIsError("401"),
     suspense: true,
   });
 
@@ -65,6 +77,7 @@ export default function SearchResult() {
 
   return (
     <Container ref={containerRef}>
+      {isError !== "none" && <Modal updateError={setIsError} />}
       <Header
         style={{ borderBottom: isScrolled ? "1px solid #f2f3f7" : "none" }}
       >
@@ -88,6 +101,7 @@ export default function SearchResult() {
               <SearchResultItem
                 key={searchResult.id}
                 searchResult={searchResult}
+                setIsError={setIsError}
               />
             );
           })
@@ -99,8 +113,10 @@ export default function SearchResult() {
 
 const SearchResultItem = ({
   searchResult,
+  setIsError,
 }: {
   searchResult: SearchResultType["documents"][number];
+  setIsError: Dispatch<SetStateAction<ErrorType>>;
 }) => {
   const [isErrorThumb, setIsErrorThumb] = useState(false);
   const [isBookmarkSaved, setIsBookmarkSaved] = useState(searchResult.isSaved);
@@ -110,7 +126,10 @@ const SearchResultItem = ({
 
   const addBookmarkMutation = useMutation({
     mutationFn: () => postAddBookmark(searchResult.id),
-    onError: (error, variables, context) => {},
+    onError: (error, variables, context) => {
+      setIsError("500");
+      setIsBookmarkSaved(false);
+    },
     onSuccess: (data, variables, context) => {
       setIsBookmarkSaved(true);
     },
@@ -118,7 +137,10 @@ const SearchResultItem = ({
 
   const removeBookmarkMutation = useMutation({
     mutationFn: () => deleteRemoveBookmark(searchResult.id),
-    onError: (error, variables, context) => {},
+    onError: (error, variables, context) => {
+      setIsError("500");
+      setIsBookmarkSaved(true);
+    },
     onSuccess: (data, variables, context) => {
       setIsBookmarkSaved(false);
     },

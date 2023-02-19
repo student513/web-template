@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 import Logo from "../assets/Logo.svg";
-import { SearchInput } from "./Input";
+import { SearchInput } from "../components/Input";
 
 export const Main = () => {
   const [keyword, setKeyword] = useState("");

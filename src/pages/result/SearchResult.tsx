@@ -52,7 +52,7 @@ export default function SearchResult() {
       };
     },
     onError: () => setIsError("401"),
-    onSuccess: () => console.log("success"),
+    onSuccess: () => setIsError("none"),
     suspense: true,
   });
 

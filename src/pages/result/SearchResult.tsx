@@ -37,7 +37,7 @@ export default function SearchResult() {
   const fromRef = useRef(0);
 
   const searchResultsQuery = useInfiniteQuery({
-    queryKey: [getSearchResults],
+    queryKey: [router.query.keyword],
     queryFn: () =>
       getSearchResults({
         query: router.query.keyword as string,
@@ -59,6 +59,7 @@ export default function SearchResult() {
   useEffect(() => {
     if (typeof router.query.keyword !== "string") return;
     setKeyword(router.query.keyword);
+    searchResultsQuery.refetch();
   }, [router.query.keyword]);
 
   useEffect(() => {

@@ -6,13 +6,10 @@ import Unsave from "@/assets/Unsave.svg";
 import { FallbackSkeleton } from "@/components/FallbackSkeleton";
 import { SearchInput } from "@/components/Input";
 import { Modal } from "@/components/Modal";
-import {
-  useDeleteRemoveBookmark,
-  useGetSearchResults,
-  usePostAddBookmark,
-} from "@/providers/ApiProvider";
+import { useAddBookmarkMutation } from "@/queries/useAddBookmarkMutation";
+import { useRemoveBookmarkMutation } from "@/queries/useRemoveBookmarkMutation";
+import { useSearchResultsQuery } from "@/queries/useSearchResultQuery";
 import { styled } from "@stitches/react";
-import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import Image, { ImageLoaderProps } from "next/image";
 import { useRouter } from "next/router";
 import {
@@ -31,35 +28,20 @@ export type ErrorType = "401" | "500" | "none";
 export default function SearchResult() {
   const router = useRouter();
   const [keyword, setKeyword] = useState<string>("");
-  const getSearchResults = useGetSearchResults();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isError, setIsError] = useState<ErrorType>("none");
   const fromRef = useRef(0);
-
-  const searchResultsQuery = useInfiniteQuery({
-    queryKey: [router.query.keyword],
-    queryFn: () =>
-      getSearchResults({
-        query: router.query.keyword as string,
-        size: 20,
-        from: fromRef.current,
-      }),
-    getNextPageParam: (lastPage, allPages) => {
-      return {
-        query: router.query.keyword as string,
-        size: 20,
-        from: fromRef.current,
-      };
-    },
-    onError: () => setIsError("401"),
-    onSuccess: () => setIsError("none"),
-    suspense: true,
-  });
+  const searchResultsQuery = useSearchResultsQuery(
+    router.query.keyword as string,
+    20,
+    fromRef.current,
+    () => setIsError("401"),
+    () => setIsError("none")
+  );
 
   useEffect(() => {
     if (typeof router.query.keyword !== "string") return;
     setKeyword(router.query.keyword);
-    searchResultsQuery.refetch();
   }, [router.query.keyword]);
 
   useEffect(() => {
@@ -169,30 +151,27 @@ const SearchResultItem = ({
   const [isErrorThumb, setIsErrorThumb] = useState(false);
   const [isBookmarkSaved, setIsBookmarkSaved] = useState(searchResult.isSaved);
   const router = useRouter();
-  const postAddBookmark = usePostAddBookmark();
-  const deleteRemoveBookmark = useDeleteRemoveBookmark();
 
-  const addBookmarkMutation = useMutation({
-    mutationFn: () => postAddBookmark(searchResult.id),
-    onError: (error, variables, context) => {
-      setIsError("500");
-      setIsBookmarkSaved(false);
-    },
-    onSuccess: (data, variables, context) => {
+  const addBookmarkMutation = useAddBookmarkMutation(
+    searchResult.id,
+    () => {
       setIsBookmarkSaved(true);
     },
-  });
-
-  const removeBookmarkMutation = useMutation({
-    mutationFn: () => deleteRemoveBookmark(searchResult.id),
-    onError: (error, variables, context) => {
+    () => {
       setIsError("500");
-      setIsBookmarkSaved(true);
-    },
-    onSuccess: (data, variables, context) => {
+      setIsBookmarkSaved(false);
+    }
+  );
+  const removeBookmarkMutation = useRemoveBookmarkMutation(
+    searchResult.id,
+    () => {
       setIsBookmarkSaved(false);
     },
-  });
+    () => {
+      setIsError("500");
+      setIsBookmarkSaved(true);
+    }
+  );
 
   const addBookmark = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
